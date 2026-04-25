@@ -1,5 +1,9 @@
 {
-  "dependencies": {
-    "node-gyp": "^12.3.0"
+  "name": "openkompass",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "npm ci --prefix frontend && npm run build --prefix frontend && npm ci --prefix backend",
+    "start": "node backend/scripts/migrate.js && node backend/server.js"
   }
 }
