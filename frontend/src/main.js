@@ -21,7 +21,7 @@ function navigate(hash) {
   const route = routes[path]
 
   if (!route) {
-    window.location.hash = isAuthenticated() ? '#/dashboard' : '#/login'
+    window.location.hash = isAuthenticated() ? '#/events' : '#/login'
     return
   }
 
@@ -31,7 +31,7 @@ function navigate(hash) {
   }
 
   if (path === '/login' && isAuthenticated()) {
-    window.location.hash = '#/dashboard'
+    window.location.hash = '#/events'
     return
   }
 

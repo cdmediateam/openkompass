@@ -29,7 +29,7 @@ export function layout(content) {
         </div>
         <nav class="flex-1 p-3 space-y-0.5">
           ${navItem('/dashboard', 'Dashboard')}
-          ${navItem('/events', 'Events')}
+          ${navItem('/events', 'Events Tomorrow')}
           ${navItem('/internal-calendar', 'Internal Calendar')}
           ${navItem('/external-calendars', 'External Calendars')}
           ${navItem('/profile', 'Edit Profile')}
