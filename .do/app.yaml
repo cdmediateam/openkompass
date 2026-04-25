@@ -1,0 +1,49 @@
+name: openkompass
+region: fra1   # change to nyc1, ams3, sgp1, etc. as needed
+
+services:
+  - name: web
+    github:
+      repo: cdmediateam/openkompass
+      branch: main
+      deploy_on_push: true
+    source_dir: /
+
+    build_command: >-
+      npm ci --prefix frontend &&
+      npm run build --prefix frontend &&
+      npm ci --prefix backend
+
+    run_command: node backend/scripts/migrate.js && node backend/server.js
+
+    environment_slug: node-js
+    instance_size_slug: apps-s-1vcpu-0.5gb
+    instance_count: 1
+
+    envs:
+      - key: NODE_ENV
+        value: production
+        scope: RUN_AND_BUILD_TIME
+
+      # Set these four in the App Platform dashboard — do not put real values here
+      - key: JWT_SECRET
+        scope: RUN_TIME
+        type: SECRET
+      - key: ROOT_USERNAME
+        scope: RUN_TIME
+      - key: ROOT_PASSWORD_HASH
+        scope: RUN_TIME
+        type: SECRET
+
+      # Your existing MySQL — fill in the real values in the dashboard
+      - key: DB_HOST
+        scope: RUN_TIME
+      - key: DB_PORT
+        scope: RUN_TIME
+      - key: DB_USER
+        scope: RUN_TIME
+      - key: DB_PASSWORD
+        scope: RUN_TIME
+        type: SECRET
+      - key: DB_NAME
+        scope: RUN_TIME

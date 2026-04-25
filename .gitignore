@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Environment — never commit real credentials
+backend/.env
+
+# Frontend build output
+frontend/dist/
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
