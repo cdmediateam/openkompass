@@ -51,6 +51,7 @@ export const api = {
   addCalendar: (data) => request('POST', '/calendars', data),
   deleteCalendar: (id) => request('DELETE', `/calendars/${id}`),
   reorderCalendars: (ids) => request('PUT', '/calendars/order', { ids }),
+  previewCalendar: (id) => request('GET', `/calendars/${id}/preview`),
   getTomorrowEvents: () => request('GET', '/events/tomorrow'),
   listEvents: () => request('GET', '/internal-events'),
   createEvent: (data) => request('POST', '/internal-events', data),

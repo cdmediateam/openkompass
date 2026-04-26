@@ -90,6 +90,11 @@ function renderFeeds(feeds) {
           : `<p class="text-amber-600/80 text-xs mt-0.5">Manual reminder — no URL</p>`
         }
       </div>
+      ${feed.url ? `
+        <button class="prev-btn flex-shrink-0 text-slate-500 hover:text-indigo-400 transition-colors text-xs px-2 py-1 rounded">
+          Preview
+        </button>
+      ` : ''}
       <button class="del-btn flex-shrink-0 text-slate-500 hover:text-red-400 transition-colors text-xs px-2 py-1 rounded">
         Remove
       </button>
@@ -122,6 +127,11 @@ function renderFeeds(feeds) {
       })
     })
 
+    const prevBtn = row.querySelector('.prev-btn')
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => showPreviewModal(feed))
+    }
+
     row.querySelector('.del-btn').addEventListener('click', async () => {
       const btn = row.querySelector('.del-btn')
       btn.disabled = true
@@ -139,6 +149,108 @@ function renderFeeds(feeds) {
 
     el.appendChild(row)
   })
+}
+
+// ── Preview modal ─────────────────────────────────────────────────────────────
+
+function showPreviewModal(feed) {
+  const existing = document.getElementById('preview-modal')
+  if (existing) existing.remove()
+
+  const modal = document.createElement('div')
+  modal.id = 'preview-modal'
+  modal.className = 'fixed inset-0 bg-black/60 backdrop-blur-sm flex items-start justify-center z-50 p-4 pt-16'
+  modal.innerHTML = `
+    <div class="bg-slate-900 border border-slate-700 rounded-xl w-full max-w-lg flex flex-col" style="max-height:70vh">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-700 flex-shrink-0">
+        <div>
+          <h3 class="text-white font-semibold text-sm">${escHtml(feed.name)}</h3>
+          <p class="text-slate-500 text-xs mt-0.5">Next 2 weeks</p>
+        </div>
+        <button id="preview-close" class="text-slate-400 hover:text-white transition-colors p-1 rounded" aria-label="Close">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M3.293 3.293a1 1 0 011.414 0L8 6.586l3.293-3.293a1 1 0 111.414 1.414L9.414 8l3.293 3.293a1 1 0 01-1.414 1.414L8 9.414l-3.293 3.293a1 1 0 01-1.414-1.414L6.586 8 3.293 4.707a1 1 0 010-1.414z"/>
+          </svg>
+        </button>
+      </div>
+      <div id="preview-body" class="overflow-y-auto p-5">
+        <div class="flex items-center gap-3 text-slate-400">
+          <div class="w-4 h-4 rounded-full border-2 border-slate-600 border-t-indigo-400 animate-spin flex-shrink-0"></div>
+          <span class="text-sm">Loading…</span>
+        </div>
+      </div>
+    </div>
+  `
+
+  document.body.appendChild(modal)
+
+  const close = () => modal.remove()
+  document.getElementById('preview-close').addEventListener('click', close)
+  modal.addEventListener('click', (e) => { if (e.target === modal) close() })
+
+  api.previewCalendar(feed.id)
+    .then((events) => {
+      const body = document.getElementById('preview-body')
+      if (!body) return
+
+      if (events.length === 0) {
+        body.innerHTML = `<p class="text-slate-500 text-sm italic">No events in the next 2 weeks.</p>`
+        return
+      }
+
+      const groups = groupEventsByDate(events)
+      body.innerHTML = groups.map(({ label, events: dayEvents }) => `
+        <div class="mb-5 last:mb-0">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">${escHtml(label)}</p>
+          <div class="space-y-1.5">
+            ${dayEvents.map((ev) => `
+              <div class="bg-slate-800 rounded-lg px-3 py-2">
+                <p class="text-white text-sm">${escHtml(ev.title)}</p>
+                <p class="text-indigo-400 text-xs mt-0.5">${escHtml(formatEventTime(ev))}</p>
+                ${ev.location ? `<p class="text-slate-500 text-xs mt-0.5">${escHtml(ev.location)}</p>` : ''}
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('')
+    })
+    .catch((err) => {
+      const body = document.getElementById('preview-body')
+      if (body) body.innerHTML = `<p class="text-red-400 text-sm">${escHtml(err.message)}</p>`
+    })
+}
+
+function groupEventsByDate(events) {
+  const map = new Map()
+  for (const ev of events) {
+    const d = new Date(ev.start)
+    const key = ev.allDay
+      ? `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`
+      : `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+    if (!map.has(key)) map.set(key, { date: d, allDay: ev.allDay, events: [] })
+    map.get(key).events.push(ev)
+  }
+
+  return Array.from(map.values()).map(({ date, allDay, events: dayEvents }) => ({
+    label: formatGroupDate(date, allDay),
+    events: dayEvents,
+  }))
+}
+
+function formatGroupDate(date, allDay) {
+  const d = allDay
+    ? new Date(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate())
+    : date
+  return d.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })
+}
+
+function formatEventTime(ev) {
+  if (ev.allDay) return 'All day'
+  const start = new Date(ev.start)
+  const opts = { hour: '2-digit', minute: '2-digit' }
+  if (!ev.end) return start.toLocaleTimeString(undefined, opts)
+  const end = new Date(ev.end)
+  return `${start.toLocaleTimeString(undefined, opts)} – ${end.toLocaleTimeString(undefined, opts)}`
 }
 
 // ── Add feed form ─────────────────────────────────────────────────────────────

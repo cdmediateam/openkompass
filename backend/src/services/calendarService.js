@@ -97,11 +97,64 @@ export async function getTomorrowEvents() {
   return allEvents
 }
 
+export async function getPreviewEvents(feedId) {
+  const [rows] = await pool.query('SELECT * FROM calendar_feeds WHERE id = ?', [feedId])
+  const feed = rows[0]
+  if (!feed) return null
+  if (!feed.url) return []
+
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0)
+  const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 13, 23, 59, 59, 999)
+
+  const parsed = await ical.async.fromURL(feed.url)
+  const result = []
+
+  for (const event of Object.values(parsed)) {
+    if (event.type !== 'VEVENT') continue
+    const occurrences = getOccurrencesInPreviewRange(event, start, end)
+    for (const occStart of occurrences) {
+      result.push({
+        title: event.summary || '(No title)',
+        start: occStart.toISOString(),
+        end: event.end ? new Date(event.end).toISOString() : null,
+        allDay: event.datetype === 'date',
+        location: event.location || null,
+      })
+    }
+  }
+
+  result.sort((a, b) => new Date(a.start) - new Date(b.start))
+  return result
+}
+
 function getTomorrowRange() {
   const now = new Date()
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0, 0)
   const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 23, 59, 59, 999)
   return { start, end }
+}
+
+function getOccurrencesInPreviewRange(event, start, end) {
+  if (event.rrule) {
+    return event.rrule.between(start, end, true)
+  }
+
+  const eStart = new Date(event.start)
+  const eEnd = event.end ? new Date(event.end) : eStart
+
+  if (event.datetype === 'date') {
+    const rangeStartDay = new Date(start.getFullYear(), start.getMonth(), start.getDate())
+    const rangeEndDay = new Date(end.getFullYear(), end.getMonth(), end.getDate())
+    const evStartDay = new Date(eStart.getUTCFullYear(), eStart.getUTCMonth(), eStart.getUTCDate())
+    const evEndDay = new Date(eEnd.getUTCFullYear(), eEnd.getUTCMonth(), eEnd.getUTCDate())
+    // DTEND is exclusive for all-day events
+    if (evStartDay <= rangeEndDay && evEndDay > rangeStartDay) return [eStart]
+    return []
+  }
+
+  if (eStart <= end && eEnd >= start) return [eStart]
+  return []
 }
 
 function getOccurrencesInRange(event, start, end) {
