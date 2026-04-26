@@ -46,11 +46,44 @@ const steps = [
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )`,
   },
+  {
+    name: 'openkompass',
+    sql: `
+      CREATE TABLE IF NOT EXISTS openkompass (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        type VARCHAR(10) NOT NULL,
+        country VARCHAR(10) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        subtitle VARCHAR(255) NULL,
+        event_date DATE NOT NULL,
+        event_time TIME NULL,
+        location VARCHAR(255) NULL,
+        description TEXT NULL,
+        link_text VARCHAR(255) NULL,
+        link_url TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      )`,
+  },
+  {
+    name: 'openkompass.subtitle column',
+    sql: `ALTER TABLE openkompass ADD COLUMN subtitle VARCHAR(255) NULL AFTER title`,
+    // MySQL error 1060 = ER_DUP_FIELDNAME — column already exists, safe to ignore
+    ignoreErrno: 1060,
+  },
 ]
 
-for (const { name, sql } of steps) {
-  await pool.query(sql)
-  console.log(`✓ ${name}`)
+for (const { name, sql, ignoreErrno } of steps) {
+  try {
+    await pool.query(sql)
+    console.log(`✓ ${name}`)
+  } catch (err) {
+    if (ignoreErrno && err.errno === ignoreErrno) {
+      console.log(`✓ ${name} (already exists)`)
+    } else {
+      throw err
+    }
+  }
 }
 
 console.log('Migration complete.')

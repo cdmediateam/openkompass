@@ -24,8 +24,11 @@ export function renderEvents(container) {
 
   bindNav()
 
+  let loadedEvents = []
+
   api.getTomorrowEvents()
     .then((events) => {
+      loadedEvents = events
       const el = document.getElementById('events-list')
       if (!el) return
       if (events.length === 0) {
@@ -35,7 +38,11 @@ export function renderEvents(container) {
           </div>`
         return
       }
-      el.innerHTML = events.map(renderCard).join('')
+      el.innerHTML = events.map((e, i) => renderCard(e, i)).join('')
+      el.querySelectorAll('.ok-btn').forEach((btn) => {
+        const idx = Number(btn.dataset.idx)
+        btn.addEventListener('click', () => convertToOpenKompass(loadedEvents[idx]))
+      })
     })
     .catch((err) => {
       const el = document.getElementById('events-list')
@@ -43,7 +50,7 @@ export function renderEvents(container) {
     })
 }
 
-function renderCard(event) {
+function renderCard(event, index) {
   if (event.notChecked) {
     return `
       <div class="bg-slate-800 border border-amber-800/50 rounded-xl p-4">
@@ -69,6 +76,9 @@ function renderCard(event) {
           ${event.location ? `<p class="text-slate-400 text-xs mt-1">${escHtml(event.location)}</p>` : ''}
           <p class="text-slate-600 text-xs mt-1">${escHtml(event.feedName)}</p>
         </div>
+        <button class="ok-btn flex-shrink-0 text-xs px-2 py-1 rounded bg-slate-700 hover:bg-indigo-700 text-slate-300 hover:text-white transition-colors" data-idx="${index}">
+          + OpenKompass
+        </button>
       </div>
     </div>`
 }
@@ -79,4 +89,18 @@ function formatTime(startIso, endIso) {
   if (!endIso) return start
   const end = new Date(endIso).toLocaleTimeString(undefined, opts)
   return `${start} – ${end}`
+}
+
+function convertToOpenKompass(event) {
+  const d = new Date(event.start)
+  const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+  const time = event.allDay ? '' : `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  sessionStorage.setItem('ok-prefill', JSON.stringify({
+    title: event.title,
+    event_date: date,
+    event_time: time,
+    location: event.location || '',
+    description: event.description || '',
+  }))
+  window.location.hash = '#/openkompass'
 }

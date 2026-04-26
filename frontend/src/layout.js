@@ -30,6 +30,7 @@ export function layout(content) {
         <nav class="flex-1 p-3 space-y-0.5">
           ${navItem('/dashboard', 'Dashboard')}
           ${navItem('/events', 'Events Tomorrow')}
+          ${navItem('/openkompass', 'OpenKompass')}
           ${navItem('/internal-calendar', 'Internal Calendar')}
           ${navItem('/external-calendars', 'External Calendars')}
           ${navItem('/profile', 'Edit Profile')}

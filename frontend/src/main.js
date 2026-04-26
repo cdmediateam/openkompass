@@ -6,11 +6,13 @@ import { renderProfile } from './views/profile.js'
 import { renderEvents } from './views/events.js'
 import { renderInternalCalendar } from './views/internalCalendar.js'
 import { renderExternalCalendars } from './views/externalCalendars.js'
+import { renderOpenKompass } from './views/openkompass.js'
 
 const routes = {
   '/login':              { render: renderLogin,             public: true  },
   '/dashboard':          { render: renderDashboard,         public: false },
   '/events':             { render: renderEvents,            public: false },
+  '/openkompass':        { render: renderOpenKompass,       public: false },
   '/internal-calendar':  { render: renderInternalCalendar,  public: false },
   '/external-calendars': { render: renderExternalCalendars, public: false },
   '/profile':            { render: renderProfile,           public: false },

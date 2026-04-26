@@ -56,4 +56,8 @@ export const api = {
   createEvent: (data) => request('POST', '/internal-events', data),
   updateEvent: (id, data) => request('PUT', `/internal-events/${id}`, data),
   deleteEvent: (id) => request('DELETE', `/internal-events/${id}`),
+  listOpenKompass: () => request('GET', '/openkompass'),
+  createOpenKompass: (data) => request('POST', '/openkompass', data),
+  updateOpenKompass: (id, data) => request('PUT', `/openkompass/${id}`, data),
+  deleteOpenKompass: (id) => request('DELETE', `/openkompass/${id}`),
 }
