@@ -7,9 +7,11 @@ import { renderEvents } from './views/events.js'
 import { renderInternalCalendar } from './views/internalCalendar.js'
 import { renderExternalCalendars } from './views/externalCalendars.js'
 import { renderOpenKompass } from './views/openkompass.js'
+import { renderUpvote } from './views/upvote.js'
 
 const routes = {
   '/login':              { render: renderLogin,             public: true  },
+  '/upvote':             { render: renderUpvote,            public: true  },
   '/dashboard':          { render: renderDashboard,         public: false },
   '/events':             { render: renderEvents,            public: false },
   '/openkompass':        { render: renderOpenKompass,       public: false },
@@ -19,7 +21,8 @@ const routes = {
 }
 
 function navigate(hash) {
-  const path = hash.replace('#', '') || '/login'
+  const full = hash.replace('#', '') || '/login'
+  const path = full.split('?')[0]
   const route = routes[path]
 
   if (!route) {

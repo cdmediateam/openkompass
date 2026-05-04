@@ -5,6 +5,7 @@ import profileRoutes from './routes/profile.js'
 import calendarRoutes from './routes/calendars.js'
 import internalEventRoutes from './routes/internalEvents.js'
 import openkompassRoutes from './routes/openkompass.js'
+import mastodonRoutes from './routes/mastodon.js'
 
 const app = new Hono()
 
@@ -15,5 +16,6 @@ app.route('/api', profileRoutes)
 app.route('/api', calendarRoutes)
 app.route('/api', internalEventRoutes)
 app.route('/api', openkompassRoutes)
+app.route('/api', mastodonRoutes)
 
 export default app

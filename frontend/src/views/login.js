@@ -69,7 +69,7 @@ export function renderLogin(container) {
     try {
       const { token } = await api.login(username, password)
       setToken(token)
-      window.location.hash = '#/dashboard'
+      window.location.hash = '#/events'
     } catch (err) {
       errorMsg.textContent = 'Invalid credentials'
       errorMsg.classList.remove('hidden')
