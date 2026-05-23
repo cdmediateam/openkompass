@@ -31,6 +31,13 @@ services:
         scope: RUN_TIME
         type: SECRET
 
+      # Ghost Members integration — set in the dashboard
+      - key: GHOST_URL
+        scope: RUN_TIME
+      - key: GHOST_ADMIN_API_KEY
+        scope: RUN_TIME
+        type: SECRET
+
       # Your existing MySQL — fill in the real values in the dashboard
       - key: DB_HOST
         scope: RUN_TIME
