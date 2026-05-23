@@ -8,6 +8,7 @@ import openkompassRoutes from './routes/openkompass.js'
 import mastodonRoutes from './routes/mastodon.js'
 import memberAuthRoutes from './routes/memberAuth.js'
 import memberRoutes from './routes/member.js'
+import memberPageRoutes from './routes/memberPage.js'
 
 const app = new Hono()
 
@@ -21,5 +22,6 @@ app.route('/api', openkompassRoutes)
 app.route('/api', mastodonRoutes)
 app.route('/api', memberAuthRoutes)
 app.route('/api', memberRoutes)
+app.route('/', memberPageRoutes)
 
 export default app
