@@ -24,7 +24,7 @@ export const ghostLogin = async (c) => {
   }
 
   const token = jwt.sign(
-    { role: 'member', ghostId: memberInfo.ghostId, email: memberInfo.email },
+    { role: 'member', ghostId: memberInfo.ghostId, email: memberInfo.email, name: memberInfo.name },
     process.env.JWT_SECRET,
     { expiresIn: '24h' }
   )

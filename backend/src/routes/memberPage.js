@@ -31,6 +31,36 @@ router.get('/member', (c) => {
     header a { color: #a1a1aa; font-size: 13px; text-decoration: none; }
     header a:hover { color: #fff; }
     main { max-width: 640px; margin: 32px auto; padding: 0 16px 80px; }
+    .member-card {
+      background: #fff;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      border: 1px solid #e4e4e7;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .member-avatar {
+      width: 40px; height: 40px; border-radius: 50%;
+      background: #18181b; color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: 700; flex-shrink: 0;
+    }
+    .member-info { flex: 1; min-width: 0; }
+    .member-name { font-size: 15px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .member-email { font-size: 13px; color: #71717a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .member-badge {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.07em; background: #dcfce7; color: #16a34a;
+      padding: 2px 8px; border-radius: 99px; flex-shrink: 0;
+    }
+    .logout-btn {
+      font-size: 12px; color: #71717a; background: none; border: none;
+      cursor: pointer; padding: 4px 0; text-decoration: underline;
+      display: block; margin-top: 2px;
+    }
+    .logout-btn:hover { color: #18181b; }
     .date-heading {
       font-size: 12px; font-weight: 600; color: #71717a;
       text-transform: uppercase; letter-spacing: 0.08em;
@@ -89,22 +119,50 @@ router.get('/member', (c) => {
       return d.toLocaleDateString('de-CH', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
     }
 
-    function renderEvents(events) {
+    function decodeJwt(token) {
+      try {
+        var payload = token.split('.')[1];
+        return JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+      } catch (e) { return null; }
+    }
+
+    function logout() {
+      sessionStorage.removeItem('okm_token');
+      window.location.href = GHOST_URL;
+    }
+
+    function renderMemberCard(user) {
+      var initial = (user.name || user.email || '?')[0].toUpperCase();
+      var name = user.name ? '<p class="member-name">' + esc(user.name) + '</p>' : '';
+      var email = '<p class="member-email">' + esc(user.email) + '</p>';
+      return '<div class="member-card">'
+        + '<div class="member-avatar">' + esc(initial) + '</div>'
+        + '<div class="member-info">' + name + email
+        + '<button class="logout-btn" onclick="logout()">Log out</button>'
+        + '</div>'
+        + '<span class="member-badge">Member</span>'
+        + '</div>';
+    }
+
+    function renderEvents(events, user) {
       var app = document.getElementById('app');
+      var html = renderMemberCard(user);
+
       if (!events.length) {
-        app.innerHTML = '<div class="empty">No events today.</div>';
+        html += '<div class="empty">No events today.</div>';
+        app.innerHTML = html;
         return;
       }
 
-      var html = '<p class="date-heading">Today &middot; ' + fmtDate(events[0].event_date) + '</p>';
+      html += '<p class="date-heading">Today &middot; ' + fmtDate(events[0].event_date) + '</p>';
 
       for (var i = 0; i < events.length; i++) {
         var e = events[i];
-        var type     = e.type       ? '<span class="badge">'    + esc(e.type)     + '</span>' : '';
-        var country  = e.country    ? '<span class="country">'  + esc(e.country)  + '</span>' : '';
-        var time     = e.event_time ? '<span class="time">'     + esc(e.event_time) + '</span>' : '';
-        var subtitle = e.subtitle   ? '<p class="subtitle">'    + esc(e.subtitle) + '</p>' : '';
-        var location = e.location   ? '<p class="location">&#128205; ' + esc(e.location) + '</p>' : '';
+        var type     = e.type        ? '<span class="badge">'   + esc(e.type)       + '</span>' : '';
+        var country  = e.country     ? '<span class="country">' + esc(e.country)    + '</span>' : '';
+        var time     = e.event_time  ? '<span class="time">'    + esc(e.event_time) + '</span>' : '';
+        var subtitle = e.subtitle    ? '<p class="subtitle">'   + esc(e.subtitle)   + '</p>' : '';
+        var location = e.location    ? '<p class="location">&#128205; ' + esc(e.location) + '</p>' : '';
         var desc     = e.description ? '<p class="desc">'       + esc(e.description) + '</p>' : '';
         var link     = (e.link_url && e.link_text)
           ? '<a class="link" href="' + esc(e.link_url) + '" target="_blank" rel="noopener">' + esc(e.link_text) + ' &rarr;</a>'
@@ -126,12 +184,21 @@ router.get('/member', (c) => {
     }
 
     (function () {
-      var token = sessionStorage.getItem('okm_token');
+      // Pick up token from URL (cross-domain redirect from Ghost), then clean the URL
+      var params = new URLSearchParams(window.location.search);
+      var urlToken = params.get('token');
+      if (urlToken) {
+        sessionStorage.setItem('okm_token', urlToken);
+        history.replaceState(null, '', '/member');
+      }
 
+      var token = sessionStorage.getItem('okm_token');
       if (!token) {
         showState('Please log in as a paid member on Ghost to access this area.', 'Go to Ghost →', GHOST_URL);
         return;
       }
+
+      var user = decodeJwt(token) || {};
 
       fetch('/api/member/today', { headers: { 'Authorization': 'Bearer ' + token } })
         .then(function (res) {
@@ -143,7 +210,7 @@ router.get('/member', (c) => {
           return res.json();
         })
         .then(function (data) {
-          if (data) renderEvents(data.events);
+          if (data) renderEvents(data.events, user);
         })
         .catch(function () {
           showState('Could not load events. Please try again later.');
