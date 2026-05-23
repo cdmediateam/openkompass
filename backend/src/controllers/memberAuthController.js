@@ -7,13 +7,14 @@ export const ghostLogin = async (c) => {
   }
 
   const body = await c.req.json().catch(() => null)
-  if (!body?.identityToken || typeof body.identityToken !== 'string') {
-    return c.json({ error: 'identityToken required' }, 400)
+  const email = body?.email?.trim().toLowerCase()
+  if (!email || !email.includes('@')) {
+    return c.json({ error: 'Valid email required' }, 400)
   }
 
   let memberInfo
   try {
-    memberInfo = await authenticateGhostMember(body.identityToken)
+    memberInfo = await authenticateGhostMember(email)
   } catch (err) {
     if (err.code === 'NOT_PAID') {
       return c.json({ error: 'Active paid subscription required' }, 403)
