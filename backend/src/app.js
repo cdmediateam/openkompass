@@ -9,6 +9,7 @@ import mastodonRoutes from './routes/mastodon.js'
 import memberAuthRoutes from './routes/memberAuth.js'
 import memberRoutes from './routes/member.js'
 import memberPageRoutes from './routes/memberPage.js'
+import debugGhostRoutes from './routes/debugGhost.js'
 
 const app = new Hono()
 
@@ -23,5 +24,6 @@ app.route('/api', mastodonRoutes)
 app.route('/api', memberAuthRoutes)
 app.route('/api', memberRoutes)
 app.route('/', memberPageRoutes)
+app.route('/api', debugGhostRoutes)
 
 export default app
